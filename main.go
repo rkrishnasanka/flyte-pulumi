@@ -17,7 +17,7 @@ func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		// Read back the default VPC and public subnets, which we will use.
 		// t := true
-		vpcID := "vpc-044b9369d2f4b2e02"
+		vpcID := "vpc-009f4986f9d95a645"
 		vpc, err := ec2.LookupVpc(ctx, &ec2.LookupVpcArgs{Id: &vpcID})
 		if err != nil {
 			return err
