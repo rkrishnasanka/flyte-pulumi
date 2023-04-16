@@ -17,20 +17,23 @@ func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		// Read back the default VPC and public subnets, which we will use.
 		// t := true
-		vpcID := "vpc-009f4986f9d95a645"
-		vpc, err := ec2.LookupVpc(ctx, &ec2.LookupVpcArgs{Id: &vpcID})
-		if err != nil {
-			return err
-		}
+		// vpcID := "vpc-012c395322b57c628"
+		// vpc, err := ec2.LookupVpc(ctx, &ec2.LookupVpcArgs{Id: &vpcID})
+		// if err != nil {
+		// 	return err
+		// }
 
 		subnet, err := ec2.GetSubnets(ctx, &ec2.GetSubnetsArgs{
 			Filters: []ec2.GetSubnetsFilter{
-				{Name: "vpc-id", Values: []string{vpc.Id}},
+				{Name: "subnet-id", Values: []string{"subnet-0063ed129917d3c44", "subnet-0dfa77319d1ada651"}},
 			},
 		})
 		if err != nil {
 			return err
 		}
+
+		// subnet := []string{"subnet-0063ed129917d3c44"}
+		vpcID := "vpc-012c395322b57c628"
 		eksRole, err := iam.NewRole(ctx, "eks-iam-eksRole", &iam.RoleArgs{
 			AssumeRolePolicy: pulumi.String(`{
 		    "Version": "2008-10-17",
@@ -93,7 +96,7 @@ func main() {
 		}
 		// Create a Security Group that we can use to actually connect to our cluster
 		clusterSg, err := ec2.NewSecurityGroup(ctx, "cluster-sg", &ec2.SecurityGroupArgs{
-			VpcId: pulumi.String(vpc.Id),
+			VpcId: pulumi.String(vpcID),
 			Egress: ec2.SecurityGroupEgressArray{
 				ec2.SecurityGroupEgressArgs{
 					Protocol:   pulumi.String("-1"),
