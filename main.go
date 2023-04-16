@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/ec2"
+	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/s3"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -29,23 +30,59 @@ func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		// Read back the default VPC and public subnets, which we will use.
 		// t := true
-		vpc, err := findDefaultVPC(ctx)
+
+		vpcID := "vpc-012c395322b57c628"
+
+		// if vpcID == "" {
+		// 	vpc, err := findDefaultVPC(ctx)
+		// 	if err != nil {
+		// 		panic(err)
+		// 	}
+		// }
+
+		vpc, err := ec2.LookupVpc(ctx, &ec2.LookupVpcArgs{Id: &vpcID})
 		if err != nil {
-			panic(err)
+			return err
 		}
 
-		// Get the subnets from the VPC
+		// subnet := []string{"subnet-0063ed129917d3c44"}
+
 		subnets, err := ec2.GetSubnets(ctx, &ec2.GetSubnetsArgs{
 			Filters: []ec2.GetSubnetsFilter{
 				{
-					Name:   "vpc-id",
-					Values: []string{vpc.Id},
+					Name: "subnet-id",
+					Values: []string{
+						"subnet-0063ed129917d3c44",
+						"subnet-0dfa77319d1ada651",
+					},
 				},
 			},
 		})
 		if err != nil {
 			panic(err)
 		}
+
+		// // Get the subnets from the VPC
+		// subnets, err := ec2.GetSubnets(ctx, &ec2.GetSubnetsArgs{
+		// 	Filters: []ec2.GetSubnetsFilter{
+		// 		{
+		// 			Name:   "vpc-id",
+		// 			Values: []string{vpc.Id},
+		// 		},
+		// 	},
+		// })
+		// if err != nil {
+		// 	panic(err)
+		// }
+
+		// Create the S3 bucket for storing the flyte data
+		flyteBucket, err := s3.NewBucket(ctx, "flyte-admin-bucket", nil)
+		if err != nil {
+			return err
+		}
+
+		// Export the name of the bucket
+		ctx.Export("flyte-admin-bucketName", flyteBucket.ID())
 
 		// Create the roles for the EKS Cluster
 		// eksClusterRole, eksNodeGroupRole, err := createEKSRoles(ctx)
@@ -68,14 +105,6 @@ func main() {
 
 		return nil
 	})
-
-	// 	k8sProvider, err := kubernetes.NewProvider(ctx, "k8sprovider", &kubernetes.ProviderArgs{
-	// 		Kubeconfig: generateKubeconfig(eksCluster.Endpoint,
-	// 			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name),
-	// 	}, pulumi.DependsOn([]pulumi.Resource{nodeGroup}))
-	// 	if err != nil {
-	// 		return err
-	// 	}
 
 	// 	namespace, err := corev1.NewNamespace(ctx, "app-ns", &corev1.NamespaceArgs{
 	// 		Metadata: &metav1.ObjectMetaArgs{
@@ -148,43 +177,6 @@ func main() {
 	// 	return nil
 	// })
 
-}
-
-// Create the KubeConfig Structure as per https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
-func generateKubeconfig(clusterEndpoint pulumi.StringOutput, certData pulumi.StringOutput, clusterName pulumi.StringOutput) pulumi.StringOutput {
-	return pulumi.Sprintf(`{
-        "apiVersion": "v1",
-        "clusters": [{
-            "cluster": {
-                "server": "%s",
-                "certificate-authority-data": "%s"
-            },
-            "name": "kubernetes",
-        }],
-        "contexts": [{
-            "context": {
-                "cluster": "kubernetes",
-                "user": "aws",
-            },
-            "name": "aws",
-        }],
-        "current-context": "aws",
-        "kind": "Config",
-        "users": [{
-            "name": "aws",
-            "user": {
-                "exec": {
-                    "apiVersion": "client.authentication.k8s.io/v1beta1",
-                    "command": "aws-iam-authenticator",
-                    "args": [
-                        "token",
-                        "-i",
-                        "%s",
-                    ],
-                },
-            },
-        }],
-    }`, clusterEndpoint, certData, clusterName)
 }
 
 func toPulumiStringArray(a []string) pulumi.StringArrayInput {

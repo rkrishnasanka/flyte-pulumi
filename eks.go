@@ -4,6 +4,7 @@ import (
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/ec2"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/eks"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/iam"
+	"github.com/pulumi/pulumi-kubernetes/sdk/v3/go/kubernetes"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -29,7 +30,7 @@ func createEKSCluster(ctx *pulumi.Context, eksClusterRole *iam.Role, nodeGroupRo
 	// TODO - We need to update the scaling capabilities as a new argument to the function and make it user definable
 
 	nodeGroupName := "flyte-eks-nodegroup-primary"
-	_, err = eks.NewNodeGroup(ctx, nodeGroupName, &eks.NodeGroupArgs{
+	primaryNodeGroup, err := eks.NewNodeGroup(ctx, nodeGroupName, &eks.NodeGroupArgs{
 		ClusterName:   eksCluster.Name,
 		NodeGroupName: pulumi.String(nodeGroupName),
 		NodeRoleArn:   pulumi.StringInput(nodeGroupRole.Arn),
@@ -58,6 +59,51 @@ func createEKSCluster(ctx *pulumi.Context, eksClusterRole *iam.Role, nodeGroupRo
 
 	ctx.Export("kubeconfig", generateKubeconfig(eksCluster.Endpoint,
 		eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name))
+	// k8sProvider
+	_, err = kubernetes.NewProvider(ctx, "k8sprovider", &kubernetes.ProviderArgs{
+		Kubeconfig: generateKubeconfig(eksCluster.Endpoint,
+			eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name),
+	}, pulumi.DependsOn([]pulumi.Resource{primaryNodeGroup}))
+	if err != nil {
+		return nil, err
+	}
 
 	return eksCluster, nil
+}
+
+// Create the KubeConfig Structure as per https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html
+func generateKubeconfig(clusterEndpoint pulumi.StringOutput, certData pulumi.StringOutput, clusterName pulumi.StringOutput) pulumi.StringOutput {
+	return pulumi.Sprintf(`{
+        "apiVersion": "v1",
+        "clusters": [{
+            "cluster": {
+                "server": "%s",
+                "certificate-authority-data": "%s"
+            },
+            "name": "kubernetes",
+        }],
+        "contexts": [{
+            "context": {
+                "cluster": "kubernetes",
+                "user": "aws",
+            },
+            "name": "aws",
+        }],
+        "current-context": "aws",
+        "kind": "Config",
+        "users": [{
+            "name": "aws",
+            "user": {
+                "exec": {
+                    "apiVersion": "client.authentication.k8s.io/v1beta1",
+                    "command": "aws-iam-authenticator",
+                    "args": [
+                        "token",
+                        "-i",
+                        "%s",
+                    ],
+                },
+            },
+        }],
+    }`, clusterEndpoint, certData, clusterName)
 }
