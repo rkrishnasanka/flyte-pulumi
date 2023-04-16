@@ -28,7 +28,7 @@ func createEKSCluster(ctx *pulumi.Context, eksClusterRole *iam.Role, nodeGroupRo
 	// Create the EKS Node Group
 	// TODO - We need to update the scaling capabilities as a new argument to the function and make it user definable
 
-	nodeGroupName := "fyte-eks-nodegroup-primary"
+	nodeGroupName := "flyte-eks-nodegroup-primary"
 	_, err = eks.NewNodeGroup(ctx, nodeGroupName, &eks.NodeGroupArgs{
 		ClusterName:   eksCluster.Name,
 		NodeGroupName: pulumi.String(nodeGroupName),
@@ -39,11 +39,13 @@ func createEKSCluster(ctx *pulumi.Context, eksClusterRole *iam.Role, nodeGroupRo
 			MaxSize:     pulumi.Int(5),
 			MinSize:     pulumi.Int(2),
 		},
+		// Currently fixing the AMI to the latest Amazon Linux 2 AMI
+		AmiType: pulumi.String("AL2_x86_64"),
 
 		// TODO - Figure out how we need to setup the instance sizes
-		// InstanceTypes: pulumi.StringArray{
-		// 	pulumi.String("t2.small"), // Replace with your desired instance type(s)
-		// },
+		InstanceTypes: pulumi.StringArray{
+			pulumi.String("t2.nano"), // Replace with your desired instance type(s)
+		},
 
 		// TODO - Add SSH Key
 		// RemoteAccess: &eks.NodeGroupRemoteAccessArgs{

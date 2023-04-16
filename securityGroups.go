@@ -24,6 +24,12 @@ func createEKSSecurityGroup(ctx *pulumi.Context, vpc *ec2.LookupVpcResult) (*ec2
 				ToPort:     pulumi.Int(80),
 				CidrBlocks: pulumi.StringArray{pulumi.String("0.0.0.0/0")},
 			},
+			ec2.SecurityGroupIngressArgs{
+				Protocol:   pulumi.String("tcp"),
+				FromPort:   pulumi.Int(443),
+				ToPort:     pulumi.Int(443),
+				CidrBlocks: pulumi.StringArray{pulumi.String("0.0.0.0/0")},
+			},
 		},
 	})
 	if err != nil {

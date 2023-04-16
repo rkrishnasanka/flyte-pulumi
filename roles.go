@@ -12,17 +12,33 @@ func createEKSRoles(ctx *pulumi.Context) (*iam.Role, *iam.Role, error) {
 
 	// Create EKS Cluster Role
 	eksClusterRole, err := iam.NewRole(ctx, "eks-iam-eksClusterRole", &iam.RoleArgs{
-		AssumeRolePolicy: pulumi.String(`{
-		"Version": "2008-10-17",
-		"Statement": [{
-			"Sid": "",
-			"Effect": "Allow",
-			"Principal": {
-				"Service": "eks.amazonaws.com"
-			},
-			"Action": "sts:AssumeRole"
-		}]
-	}`),
+		AssumeRolePolicy: pulumi.String(
+			// 	`{
+			// 	"Version": "2008-10-17",
+			// 	"Statement": [{
+			// 		"Sid": "",
+			// 		"Effect": "Allow",
+			// 		"Principal": {
+			// 			"Service": "eks.amazonaws.com"
+			// 		},
+			// 		"Action": "sts:AssumeRole"
+			// }]
+			// }`
+			`{
+			"Version": "2012-10-17",
+			"Statement": [
+				{
+					"Effect": "Allow",
+					"Principal": {
+						"Service": [
+							"eks.amazonaws.com"
+						]
+					},
+					"Action": "sts:AssumeRole"
+				}
+			]
+		}`),
+		// PermissionsBoundary: pulumi.String("arn:aws:iam::aws:policy/AdministratorAccess"),
 	})
 
 	if err != nil {
@@ -32,6 +48,7 @@ func createEKSRoles(ctx *pulumi.Context) (*iam.Role, *iam.Role, error) {
 	eksPolicies := []string{
 		"arn:aws:iam::aws:policy/AmazonEKSServicePolicy",
 		"arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
+		"arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
 	}
 	for i, eksPolicy := range eksPolicies {
 		_, err := iam.NewRolePolicyAttachment(ctx, fmt.Sprintf("rpa-%d", i), &iam.RolePolicyAttachmentArgs{
@@ -45,16 +62,33 @@ func createEKSRoles(ctx *pulumi.Context) (*iam.Role, *iam.Role, error) {
 
 	// Create the EC2 NodeGroup Role
 	nodeGroupRole, err := iam.NewRole(ctx, "eks-iam-nodeGroupRole", &iam.RoleArgs{
-		AssumeRolePolicy: pulumi.String(`{
+		AssumeRolePolicy: pulumi.String(
+			// 		`{
+			// 	"Version": "2012-10-17",
+			// 	"Statement": [{
+			// 		"Sid": "",
+			// 		"Effect": "Allow",
+			// 		"Principal": {
+			// 			"Service": "ec2.amazonaws.com"
+			// 		},
+			// 		"Action": "sts:AssumeRole"
+			// 	}]
+			// }`
+			`{
 		"Version": "2012-10-17",
-		"Statement": [{
-			"Sid": "",
-			"Effect": "Allow",
-			"Principal": {
-				"Service": "ec2.amazonaws.com"
-			},
-			"Action": "sts:AssumeRole"
-		}]
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Action": [
+					"sts:AssumeRole"
+				],
+				"Principal": {
+					"Service": [
+						"ec2.amazonaws.com"
+					]
+				}
+			}
+		]
 	}`),
 	})
 	if err != nil {

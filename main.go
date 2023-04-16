@@ -5,94 +5,69 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
+type FlyteConfig struct {
+	// The name of the VPC to use for the EKS cluster
+	VpcName string
+	// The name of the RDS instance to use for the Flyte database
+	RdsName string
+	// The name of the EKS cluster to create
+	EksClusterName string
+	// The name of the EKS node group to create
+	PrimaryNodeGroupScalingConfig *ScalingConfig
+}
+
+type ScalingConfig struct {
+	// The minimum number of nodes to run in the node group
+	MinSize int
+	// The maximum number of nodes to run in the node group
+	MaxSize int
+	// The number of nodes to run in the node group
+	DesiredSize int
+}
+
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		// Read back the default VPC and public subnets, which we will use.
 		// t := true
-		vpc := findDefaultVPC(ctx)
+		vpc, err := findDefaultVPC(ctx)
+		if err != nil {
+			panic(err)
+		}
 
 		// Get the subnets from the VPC
-		_, err := ec2.GetSubnets(ctx, &ec2.GetSubnetsArgs{
+		subnets, err := ec2.GetSubnets(ctx, &ec2.GetSubnetsArgs{
 			Filters: []ec2.GetSubnetsFilter{
-				{Name: "vpc-id", Values: []string{vpc.Id}},
+				{
+					Name:   "vpc-id",
+					Values: []string{vpc.Id},
+				},
 			},
 		})
 		if err != nil {
-			return err
+			panic(err)
 		}
-
-		// // Find the corresponding RDS
-		// rds := findDefaultRDS(ctx)
-		// println(vpc)
-		// println(rds)
 
 		// Create the roles for the EKS Cluster
 		// eksClusterRole, eksNodeGroupRole, err := createEKSRoles(ctx)
-		_, _, err = createEKSRoles(ctx)
+		eksClusterRole, eksNodeGroupRole, err := createEKSRoles(ctx)
+		if err != nil {
+			panic(err)
+		}
+
+		// Create the Security Groups for the EKS Cluster
+		clusterSecurityGroup, err := createEKSSecurityGroup(ctx, vpc)
+		if err != nil {
+			panic(err)
+		}
+
+		// Create the EKS Cluster
+		_, err = createEKSCluster(ctx, eksClusterRole, eksNodeGroupRole, subnets, clusterSecurityGroup)
 		if err != nil {
 			panic(err)
 		}
 
 		return nil
 	})
-
-	// 	// Create a Security Group that we can use to actually connect to our cluster
-	// 	clusterSg, err := ec2.NewSecurityGroup(ctx, "cluster-sg", &ec2.SecurityGroupArgs{
-	// 		VpcId: pulumi.String(vpc.Id),
-	// 		Egress: ec2.SecurityGroupEgressArray{
-	// 			ec2.SecurityGroupEgressArgs{
-	// 				Protocol:   pulumi.String("-1"),
-	// 				FromPort:   pulumi.Int(0),
-	// 				ToPort:     pulumi.Int(0),
-	// 				CidrBlocks: pulumi.StringArray{pulumi.String("0.0.0.0/0")},
-	// 			},
-	// 		},
-	// 		Ingress: ec2.SecurityGroupIngressArray{
-	// 			ec2.SecurityGroupIngressArgs{
-	// 				Protocol:   pulumi.String("tcp"),
-	// 				FromPort:   pulumi.Int(80),
-	// 				ToPort:     pulumi.Int(80),
-	// 				CidrBlocks: pulumi.StringArray{pulumi.String("0.0.0.0/0")},
-	// 			},
-	// 		},
-	// 	})
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	// Create EKS Cluster
-	// 	eksCluster, err := eks.NewCluster(ctx, "eks-cluster", &eks.ClusterArgs{
-	// 		RoleArn: pulumi.StringInput(eksRole.Arn),
-	// 		VpcConfig: &eks.ClusterVpcConfigArgs{
-	// 			PublicAccessCidrs: pulumi.StringArray{
-	// 				pulumi.String("0.0.0.0/0"),
-	// 			},
-	// 			SecurityGroupIds: pulumi.StringArray{
-	// 				clusterSg.ID().ToStringOutput(),
-	// 			},
-	// 			SubnetIds: toPulumiStringArray(subnet.Ids),
-	// 		},
-	// 	})
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	nodeGroup, err := eks.NewNodeGroup(ctx, "node-group-2", &eks.NodeGroupArgs{
-	// 		ClusterName:   eksCluster.Name,
-	// 		NodeGroupName: pulumi.String("demo-eks-nodegroup-2"),
-	// 		NodeRoleArn:   pulumi.StringInput(nodeGroupRole.Arn),
-	// 		SubnetIds:     toPulumiStringArray(subnet.Ids),
-	// 		ScalingConfig: &eks.NodeGroupScalingConfigArgs{
-	// 			DesiredSize: pulumi.Int(2),
-	// 			MaxSize:     pulumi.Int(2),
-	// 			MinSize:     pulumi.Int(1),
-	// 		},
-	// 	})
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	ctx.Export("kubeconfig", generateKubeconfig(eksCluster.Endpoint,
-	// 		eksCluster.CertificateAuthority.Data().Elem(), eksCluster.Name))
 
 	// 	k8sProvider, err := kubernetes.NewProvider(ctx, "k8sprovider", &kubernetes.ProviderArgs{
 	// 		Kubeconfig: generateKubeconfig(eksCluster.Endpoint,
