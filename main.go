@@ -81,6 +81,8 @@ func main() {
 			return err
 		}
 
+		// TODO - Figure out if the vpc has access to the bucket
+
 		// Export the name of the bucket
 		ctx.Export("flyte-admin-bucketName", flyteBucket.ID())
 

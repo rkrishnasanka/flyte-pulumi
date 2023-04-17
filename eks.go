@@ -68,6 +68,28 @@ func createEKSCluster(ctx *pulumi.Context, eksClusterRole *iam.Role, nodeGroupRo
 		return nil, err
 	}
 
+	// Retrieve the OIDC issuer URL
+	// aws eks describe-cluster --region us-east-1 --name eks-flyte-cluster-12345 --query "cluster.identity.oidc.issuer" --output text
+
+	// // Print the OIDC issuer URL
+	// ctx.Export("OIDCIssuerURL", pulumi.Sprintf("OIDC issuer URL: %s", *oidcIssuer))
+
+	// Create an IAM OpenID Connect (OIDC) provider
+	// eksctl utils associate-iam-oidc-provider --cluster <Name-EKS-Cluster> --approve
+	// _, err = eks.NewIdentityProviderConfig(ctx, "flyte-system-oidc-provider", &eks.IdentityProviderConfigArgs{
+	// 	ClusterName: eksCluster.Name,
+	// 	// Oidc:        &eks.IdentityProviderConfigOidcArgs{},
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// // Create an IAM role for the service account
+	// _, err = createFlyteSystemRole(ctx)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
 	return eksCluster, nil
 }
 

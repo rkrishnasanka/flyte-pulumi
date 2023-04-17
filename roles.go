@@ -111,3 +111,20 @@ func createEKSRoles(ctx *pulumi.Context) (*iam.Role, *iam.Role, error) {
 
 	return eksClusterRole, nodeGroupRole, nil
 }
+
+func createFlyteSystemRole(ctx *pulumi.Context) (*iam.Role, error) {
+	panic("Not Implemented !")
+	// flyte_system_role, err := iam.NewRole(ctx, "flyte-system", nil)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// _, err = iam.NewRolePolicyAttachment(ctx, "flyte-system-attachment", &iam.RolePolicyAttachmentArgs{
+	// 	Role:      flyte_system_role.Name,
+	// 	PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AmazonS3FullAccess"),
+	// })
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// return flyte_system_role, nil
+}
