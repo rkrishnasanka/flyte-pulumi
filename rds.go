@@ -19,14 +19,14 @@ func createRDSCluster(ctx *pulumi.Context, subnets *ec2.GetSubnetsResult, eksClu
 	}
 
 	rdsCluster, err := rds.NewCluster(ctx, "flyteadmin-rds-cluster", &rds.ClusterArgs{
-		ClusterIdentifier:      pulumi.String("flyteadmin"),
-		Engine:                 pulumi.String("aurora-postgresql"),
-		EngineVersion:          pulumi.String("15"),
-		DatabaseName:           pulumi.String("flyteadmin"),
-		MasterUsername:         pulumi.String("flyteadmin"),
-		MasterPassword:         pulumi.String("thisisaweakpassword"),
-		DbClusterInstanceClass: pulumi.String("db.r5.large"),
-		DbSubnetGroupName:      subnetGroup.Name,
+		ClusterIdentifier: pulumi.String("flyteadmin"),
+		Engine:            pulumi.String("aurora-postgresql"),
+		EngineVersion:     pulumi.String("15"),
+		DatabaseName:      pulumi.String("flyteadmin"),
+		MasterUsername:    pulumi.String("flyteadmin"),
+		MasterPassword:    pulumi.String("thisisaweakpassword"),
+		// DbClusterInstanceClass: pulumi.String("db.r5.large"),
+		DbSubnetGroupName: subnetGroup.Name,
 		// AllocatedStorage:  pulumi.Int(20),
 		// VpcSecurityGroupIds: pulumi.StringArray{
 		// 	pulumi.String("sg-0a1b2c3d4e5f6g7h8"),
