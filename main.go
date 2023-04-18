@@ -56,6 +56,7 @@ func main() {
 					Values: []string{
 						"subnet-0063ed129917d3c44",
 						"subnet-0dfa77319d1ada651",
+						"subnet-083462886f234b559",
 					},
 				},
 			},
@@ -102,16 +103,16 @@ func main() {
 		}
 
 		// Create the EKS Cluster
-		_, err = createEKSCluster(ctx, eksClusterRole, eksNodeGroupRole, subnets, clusterSecurityGroup)
+		eksCluster, err := createEKSCluster(ctx, eksClusterRole, eksNodeGroupRole, subnets, clusterSecurityGroup)
 		if err != nil {
 			panic(err)
 		}
 
-		// // Create the RDS instance
-		// _, err = createRDSCluster(ctx, subnets, eksCluster)
-		// if err != nil {
-		// 	panic(err)
-		// }
+		// Create the RDS instance
+		_, err = createRDSCluster(ctx, subnets, eksCluster)
+		if err != nil {
+			panic(err)
+		}
 
 		return nil
 	})
