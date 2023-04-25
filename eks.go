@@ -37,15 +37,17 @@ func createEKSCluster(ctx *pulumi.Context, eksClusterRole *iam.Role, nodeGroupRo
 		SubnetIds:     toPulumiStringArray(subnets.Ids),
 		ScalingConfig: &eks.NodeGroupScalingConfigArgs{
 			DesiredSize: pulumi.Int(5),
-			MaxSize:     pulumi.Int(5),
+			MaxSize:     pulumi.Int(15),
 			MinSize:     pulumi.Int(2),
 		},
 		// Currently fixing the AMI to the latest Amazon Linux 2 AMI
 		AmiType: pulumi.String("AL2_x86_64"),
 
 		// TODO - Figure out how we need to setup the instance sizes
+		// Note - make sure that the instance has enough cpu's or else
+		// the core services within kubernetes will not start
 		InstanceTypes: pulumi.StringArray{
-			pulumi.String("t2.nano"), // Replace with your desired instance type(s)
+			pulumi.String("t2.medium"), // Replace with your desired instance type(s)
 		},
 
 		// TODO - Add SSH Key
