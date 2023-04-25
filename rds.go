@@ -2,12 +2,11 @@ package main
 
 import (
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/ec2"
-	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/eks"
 	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/rds"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func createRDSCluster(ctx *pulumi.Context, subnets *ec2.GetSubnetsResult, eksCluster *eks.Cluster) (*rds.Instance, error) {
+func createRDSCluster(ctx *pulumi.Context, subnets *ec2.GetSubnetsResult) (*rds.Instance, error) {
 	subnetGroup, err := rds.NewSubnetGroup(ctx, "flyteadmin-rds-subnetgroup", &rds.SubnetGroupArgs{
 		SubnetIds: toPulumiStringArray(subnets.Ids),
 		// Tags: pulumi.StringMap{
