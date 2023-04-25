@@ -34,20 +34,28 @@ func createRDSCluster(ctx *pulumi.Context, subnets *ec2.GetSubnetsResult) (*rds.
 	// 	// DeletionProtection: pulumi.Bool(false),
 	// 	// StorageEncrypted: pulumi.Bool(true),
 	// })
-	// _, err = rds.NewInstance(ctx, "flyteadmin-rds-instance", &rds.InstanceArgs{
-	// 	InstanceClass:     pulumi.String("db.r5.large"),
-	// 	ClusterIdentifier: rdsCluster.ID(),
-	// 	// InstanceClass:     pulumi.String("db.r5.large"),
-	// 	Engine:            pulumi.String("aurora-postgresql"),
-	// 	EngineVersion:     pulumi.String("15"),
-	// 	DbSubnetGroupName: subnetGroup.Name,
-	// 	InstanceClass:     pulumi.String("db.t3.micro"),
-	// })
+
+	// var clusterInstances []*rds.ClusterInstance
+	// for index := 0; index < 2; index++ {
+	// 	key0 := index
+	// 	val0 := index
+	// 	__res, err := rds.NewClusterInstance(ctx, fmt.Sprintf("clusterInstances-%v", key0), &rds.ClusterInstanceArgs{
+	// 		Identifier:        pulumi.String(fmt.Sprintf("aurora-cluster-demo-%v", val0)),
+	// 		ClusterIdentifier: _default.ID(),
+	// 		InstanceClass:     pulumi.String("db.r4.large"),
+	// 		Engine:            _default.Engine,
+	// 		EngineVersion:     _default.EngineVersion,
+	// 	})
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	clusterInstances = append(clusterInstances, __res)
+	// }
 
 	rdsInstance, err := rds.NewInstance(ctx, "default", &rds.InstanceArgs{
 		AllocatedStorage: pulumi.Int(20),
 		DbName:           pulumi.String("flyteadmin"),
-		Engine:           pulumi.String("aurora-postgresql"),
+		Engine:           pulumi.String("postgres"),
 		EngineVersion:    pulumi.String("15"),
 		InstanceClass:    pulumi.String("db.t3.micro"),
 		// ParameterGroupName: pulumi.String("default.mysql5.7"),
