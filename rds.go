@@ -52,7 +52,7 @@ func createRDSCluster(ctx *pulumi.Context, subnets *ec2.GetSubnetsResult) (*rds.
 	// 	clusterInstances = append(clusterInstances, __res)
 	// }
 
-	rdsInstance, err := rds.NewInstance(ctx, "default", &rds.InstanceArgs{
+	rdsInstance, err := rds.NewInstance(ctx, "flyte-db", &rds.InstanceArgs{
 		AllocatedStorage: pulumi.Int(20),
 		DbName:           pulumi.String("flyteadmin"),
 		Engine:           pulumi.String("postgres"),
