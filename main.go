@@ -103,13 +103,13 @@ func main() {
 		}
 
 		// Create the EKS Cluster
-		eksCluster, err := createEKSCluster(ctx, eksClusterRole, eksNodeGroupRole, subnets, clusterSecurityGroup)
+		_, err = createEKSCluster(ctx, eksClusterRole, eksNodeGroupRole, subnets, clusterSecurityGroup)
 		if err != nil {
 			panic(err)
 		}
 
 		// Create the RDS instance
-		_, err = createRDSCluster(ctx, subnets, eksCluster)
+		_, err = createRDSCluster(ctx, subnets)
 		if err != nil {
 			panic(err)
 		}
